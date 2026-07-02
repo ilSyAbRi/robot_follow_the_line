@@ -3,24 +3,23 @@
 // ======================================
 
 // ---------- MOTOR PINS ----------
-const int ENA = 5;
-const int IN1 = 2;
-const int IN2 = 3;
+const int ENA =6;
+const int IN1 = 7;
+const int IN2 = 2;
 
-const int ENB = 6;
-const int IN3 = 4;
-const int IN4 = 7;
+const int ENB = 5;
+const int IN3 = 3;
+const int IN4 = 4;
 
 // ---------- SENSOR PINS ----------
-const int S2 = A5;   // Left sensor
-const int S3 = A0;   // Right sensor
+const int SR = A5;   // Left sensor
+const int SL = A2;   // Right sensor
+const int SF1 = A4;
+const int SF2 = A3;
 
-// ---------- SETTINGS ----------
-const int THRESHOLD = 50;
 
-const int FORWARD_SPEED = 255;
-const int TURN_SPEED = 150;
-const int STOP_SPEED = 0;
+
+
 
 // ======================================
 
@@ -40,7 +39,28 @@ void setup()
 
 // ======================================
 
-void forward()
+void forward(int speed)
+{
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
+
+    analogWrite(ENA, speed);
+    analogWrite(ENB, speed);
+}
+void stop()
+{
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, 0);
+
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, 0);
+
+}
+
+void turnLeft(int speed)
 {
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
@@ -48,71 +68,43 @@ void forward()
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
 
-    analogWrite(ENA, FORWARD_SPEED);
-    analogWrite(ENB, FORWARD_SPEED);
+    analogWrite(ENA, speed);
+    analogWrite(ENB, speed);
 }
 
-void turnLeft()
+void turnRight(int speed)
 {
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
 
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
 
-    analogWrite(ENA, STOP_SPEED);
-    analogWrite(ENB, TURN_SPEED);
+    analogWrite(ENA, speed);
+    analogWrite(ENB, speed);
 }
 
-void turnRight()
-{
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
-
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
-
-    analogWrite(ENA, TURN_SPEED);
-    analogWrite(ENB, STOP_SPEED);
-}
-
-// ======================================
+// ===
+//===================================
 
 void loop()
 {
-    int left = analogRead(S2);
-    int right = analogRead(S3);
-
-    Serial.print(left);
-    Serial.print("  ");
-    Serial.println(right);
-
-    // Both sensors on white
-    if (left < THRESHOLD && right < THRESHOLD)
+    int left = analogRead(SL);
+    int right = analogRead(SR);
+    int front1 = analogRead(SF1);
+    int front2 = analogRead(SF2);
+    if ((front1 < 50 || front2 < 50) && left < 50 && right > 50)
     {
-        Serial.println("both white go forward");
-        forward();
+        turnRight(150);
+    }
+    if ((front1 > 50 || front2 > 50) && left < 50 && right < 50)
+    {
+        forward(150);
+    }
+    if ((front1 < 50 || front2 < 50) && left > 50 && right < 50 )
+    {
+        turnLeft(150);
     }
 
-    // Left sensor on black
-    else if (left < THRESHOLD && right > THRESHOLD)
-    {
-        Serial.println("it s right GO right");
-        turnRight();      // Swap with turnLeft() if needed
-    }
-
-    // Right sensor on black
-    else if (right < THRESHOLD && left > THRESHOLD)
-    {
-        Serial.println("it s left GO LEFTH");
-        turnLeft();       // Swap with turnRight() if needed
-    }
-
-    // Both sensors on black
-    else
-    {
-        Serial.println("BOTH BLACK go forward ");
-        forward();
-    }
 
 }
