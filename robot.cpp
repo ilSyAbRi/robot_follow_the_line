@@ -2,7 +2,7 @@
 // SIMPLE LINE FOLLOWER
 // ======================================
 
-// -------- MOTOR PINS --------
+// ---------- MOTOR PINS ----------
 const int ENA = 5;
 const int IN1 = 2;
 const int IN2 = 3;
@@ -11,103 +11,108 @@ const int ENB = 6;
 const int IN3 = 4;
 const int IN4 = 7;
 
-// -------- SENSOR PINS --------
-const int S2 = A0;  
-const int S3 = A1;
+// ---------- SENSOR PINS ----------
+const int S2 = A5;   // Left sensor
+const int S3 = A0;   // Right sensor
 
-// -------- SETTINGS --------
-const int THRESHOLD = 500;
+// ---------- SETTINGS ----------
+const int THRESHOLD = 50;
 
-const int BASE_SPEED = 150;
-const int CORRECTION = 40;
+const int FORWARD_SPEED = 255;
+const int TURN_SPEED = 150;
+const int STOP_SPEED = 0;
 
 // ======================================
 
 void setup()
 {
+    pinMode(ENA, OUTPUT);
+    pinMode(ENB, OUTPUT);
+
     pinMode(IN1, OUTPUT);
     pinMode(IN2, OUTPUT);
 
     pinMode(IN3, OUTPUT);
     pinMode(IN4, OUTPUT);
 
-    pinMode(ENA, OUTPUT);
-    pinMode(ENB, OUTPUT);
-
     Serial.begin(9600);
+}
 
-    // Motors always move forward
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
+// ======================================
+
+void forward()
+{
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
 
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
+
+    analogWrite(ENA, FORWARD_SPEED);
+    analogWrite(ENB, FORWARD_SPEED);
+}
+
+void turnLeft()
+{
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+
+    analogWrite(ENA, STOP_SPEED);
+    analogWrite(ENB, TURN_SPEED);
+}
+
+void turnRight()
+{
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+
+    analogWrite(ENA, TURN_SPEED);
+    analogWrite(ENB, STOP_SPEED);
 }
 
 // ======================================
 
 void loop()
 {
-    int leftValue  = analogRead(S2);
-    int rightValue = analogRead(S3);
+    int left = analogRead(S2);
+    int right = analogRead(S3);
 
-    bool leftBlack  = leftValue < THRESHOLD;
-    bool rightBlack = rightValue < THRESHOLD;
+    Serial.print(left);
+    Serial.print("  ");
+    Serial.println(right);
 
-    // Default speed
-    int leftMotor  = BASE_SPEED;
-    int rightMotor = BASE_SPEED;
-
-    // -----------------------------
-    // Normal state
-    // Both sensors see white
-    // -----------------------------
-    if (!leftBlack && !rightBlack)
+    // Both sensors on white
+    if (left < THRESHOLD && right < THRESHOLD)
     {
-        // Keep going
+        Serial.println("both white go forward");
+        forward();
     }
 
-    // -----------------------------
-    // Robot moved left
-    // S2 sees black
-    // Turn right a little
-    // -----------------------------
-    else if (leftBlack && !rightBlack)
+    // Left sensor on black
+    else if (left < THRESHOLD && right > THRESHOLD)
     {
-        leftMotor  += CORRECTION;
-        rightMotor -= CORRECTION;
+        Serial.println("it s right GO right");
+        turnRight();      // Swap with turnLeft() if needed
     }
 
-    // -----------------------------
-    // Robot moved right
-    // S3 sees black
-    // Turn left a little
-    // -----------------------------
-    else if (!leftBlack && rightBlack)
+    // Right sensor on black
+    else if (right < THRESHOLD && left > THRESHOLD)
     {
-        leftMotor  -= CORRECTION;
-        rightMotor += CORRECTION;
+        Serial.println("it s left GO LEFTH");
+        turnLeft();       // Swap with turnRight() if needed
     }
 
-    // -----------------------------
-    // Both black
-    // Ignore for now
-    // -----------------------------
+    // Both sensors on black
     else
     {
-        // We'll use this later for intersections.
+        Serial.println("BOTH BLACK go forward ");
+        forward();
     }
 
-    // Send speeds to motors
-    analogWrite(ENA, leftMotor);
-    analogWrite(ENB, rightMotor);
-
-    // Debug
-    Serial.print("S2: ");
-    Serial.print(leftValue);
-
-    Serial.print("   S3: ");
-    Serial.println(rightValue);
-
-    delay(5);
 }
